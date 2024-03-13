@@ -42,12 +42,12 @@ Before getting started, ensure you have the following prerequisites installed:
 
 4. **Deploy backend**:
    ```
-   sam build && sam deploy
+   cd backend && sam build && sam deploy
    ```
 
 5. **Deploy frontend**:
    ```
-   npm run build && npm run deploy
+   cd frontend && npm run build && npm run deploy
    ```
 
 ## Usage
