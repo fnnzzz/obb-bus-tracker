@@ -1,5 +1,5 @@
 import { ArrowPathIcon, ClockIcon } from "@heroicons/react/20/solid";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const fromHomeRoutes = [
   { name: "🚍 Kaiser → Liesing", value: "kaiser-liesing" },
@@ -10,12 +10,12 @@ const fromHomeRoutes = [
 ];
 
 const toHomeRoutes = [
-  { name: "🚌 Liesing → Rodaun", value: "liesing-rodaun_bus" },
+  { name: "🚍 Liesing → Rodaun", value: "liesing-rodaun_bus" },
   { name: "🚉 Westbahnhof → Rodaun", value: "westbahnhof-rodaun_tram" },
   { name: "🚆 Hauptbahnhof → Liesing Bhf", value: "hauptbahnhof-liesing_bhf" },
   { name: "🚆 Prater Bhf → Liesing Bhf", value: "prater_bhf-liesing_bhf" },
   { name: "🚉 Hietzing → Rodaun", value: "hietzing-rodaun_tram" },
-  { name: "🚌 Liesing → Spitalskirche", value: "liesing-spitalskirche" },
+  { name: "🚍 Liesing → Spitalskirche", value: "liesing-spitalskirche" },
 ];
 
 const mainTabs = [
@@ -45,14 +45,21 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Add helper function to remove text in brackets
+function removeTextInBrackets(text) {
+  return text.replace(/\([^()]*\)/g, "").trim();
+}
+
 export default function ScheduleList() {
-  const [refresh, forceRefresh] = useState("");
-  const [activeTab, setActiveTab] = useState("from-home");
+  const [refresh] = useState("");
+  const [activeTab, setActiveTab] = useState(() => "from-home");
   const [allRouteData, setAllRouteData] = useState({});
   const [routeCounts, setRouteCounts] = useState({});
 
-  const currentRoutes =
-    mainTabs.find((tab) => tab.key === activeTab)?.routes || [];
+  const currentRoutes = useMemo(
+    () => mainTabs.find((tab) => tab.key === activeTab)?.routes || [],
+    [activeTab]
+  );
 
   const fetchRouteData = (routeValue, count) => {
     return fetch(
@@ -104,12 +111,15 @@ export default function ScheduleList() {
   useEffect(() => {
     // Clear previous data when tab changes
     setAllRouteData({});
+  }, [activeTab, refresh]);
 
+  useEffect(() => {
+    // Fetch data for current routes
     currentRoutes.forEach((route) => {
       const count = routeCounts[route.value] || 5;
       fetchRouteData(route.value, count);
     });
-  }, [activeTab, refresh]);
+  }, [currentRoutes, routeCounts]);
 
   return (
     <div className="my-0 mx-auto p-3" style={{ maxWidth: 400 }}>
@@ -207,6 +217,14 @@ export default function ScheduleList() {
                     const transportColorClassName =
                       colorMap[transportName] ?? colorMap["DEFAULT"];
 
+                    const _lastStop = removeTextInBrackets(
+                      item?.lastStop.replace("Wien ", "")
+                    );
+                    const lastStopName =
+                      _lastStop.length > 20
+                        ? _lastStop.slice(0, 20) + "…"
+                        : _lastStop;
+
                     return (
                       <div
                         key={item.id}
@@ -237,11 +255,6 @@ export default function ScheduleList() {
                                 <span>
                                   {item.rt?.dlt ? item.rt?.dlt : item.ti}
                                 </span>
-                                {item.ati && (
-                                  <span className="text-sm text-gray-500 ml-2">
-                                    → {item.ati}
-                                  </span>
-                                )}
                               </span>
 
                               {item.rt?.dlm ? (
@@ -259,13 +272,11 @@ export default function ScheduleList() {
                                   Canceled
                                 </span>
                               ) : null}
-                              {(transportName.startsWith("S") ||
-                                transportName.startsWith("REX")) &&
-                                item?.lastStop && (
-                                  <span className="block text-sm text-gray-600">
-                                    to: {item?.lastStop}
-                                  </span>
-                                )}
+                              {item?.lastStop && (
+                                <span className="block text-sm text-gray-600">
+                                  → at {item.ati} {lastStopName}
+                                </span>
+                              )}
                             </p>
                           </dd>
                         </div>
