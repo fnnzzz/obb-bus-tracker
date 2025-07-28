@@ -1,6 +1,7 @@
 # ÖBB Bus Tracker
 
 Welcome to ÖBB Bus Tracker, a project aimed at providing real-time information about the nearest buses at predefined stops using the ÖBB API. This project consists of a frontend built with React using Create React App, and a backend powered by AWS Lambda on Node.js.
+WIEN MOBILE / REGIO
 
 ## Demo
 
@@ -21,6 +22,7 @@ Before getting started, ensure you have the following prerequisites installed:
 - [Node.js](https://nodejs.org/) (with npm)
 - [AWS CLI](https://aws.amazon.com/cli/)
 - [AWS SAM CLI](https://aws.amazon.com/serverless/sam/)
+- [Docker](https://docs.docker.com/engine/install/)
 - AWS account with necessary permissions for Lambda deployment
 
 ## Setup
@@ -54,6 +56,9 @@ Before getting started, ensure you have the following prerequisites installed:
 
 To use the ÖBB Bus Tracker:
 
+- Run Lambda locally (need docker) - `cd backend && sam local start-api`
+- Run front-end app locally - `cd frontend && npm run start`
+- Change lambda-url for `fetch` in `frontend/src/App.js` to `localhost:`
 - Access the frontend by navigating to the provided CloudFront URL.
 - Use predefined routes or customize your own by specifying 'from' and 'to' in the query string, for example: `/?from=rodaun&to=liesing`.
 

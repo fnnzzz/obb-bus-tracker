@@ -8,7 +8,7 @@ Description: >
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 10
+    Timeout: 20
     Tracing: Active
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
@@ -33,6 +33,23 @@ Resources:
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: BUFFERED
+        Cors:
+          AllowOrigins:
+            - "*" # Allows all origins; change as needed for more specific domains
+          AllowMethods:
+            - GET
+            - POST
+          AllowHeaders:
+            - Content-Type
+            - Authorization
+      # ONLY FOR DEVELOPMENT
+      # Events:
+      #   Api:
+      #     Type: Api
+      #     Properties:
+      #       Path: /
+      #       Method: GET
+
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
