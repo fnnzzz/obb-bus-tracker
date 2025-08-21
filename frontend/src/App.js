@@ -50,11 +50,33 @@ function removeTextInBrackets(text) {
   return text.replace(/\([^()]*\)/g, "").trim();
 }
 
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+}
+
+// Home coordinates
+const HOME_COORDINATES = {
+  lat: 48.1322819,
+  lon: 16.2630222
+};
+
+// Distance threshold in kilometers
+const DISTANCE_THRESHOLD_KM = 1;
+
 export default function ScheduleList() {
   const [refresh] = useState("");
   const [activeTab, setActiveTab] = useState(() => "from-home");
   const [allRouteData, setAllRouteData] = useState({});
   const [routeCounts, setRouteCounts] = useState({});
+  const [locationDetected, setLocationDetected] = useState(false);
 
   const currentRoutes = useMemo(
     () => mainTabs.find((tab) => tab.key === activeTab)?.routes || [],
@@ -107,6 +129,44 @@ export default function ScheduleList() {
     const count = routeCounts[routeValue] || 5;
     fetchRouteData(routeValue, count);
   };
+
+  useEffect(() => {
+    // Geolocation detection for auto tab selection
+    if (!locationDetected && navigator && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const distanceFromHome = calculateDistance(
+            HOME_COORDINATES.lat,
+            HOME_COORDINATES.lon,
+            latitude,
+            longitude
+          );
+          
+          // Auto-set tab based on distance from home
+          if (distanceFromHome > DISTANCE_THRESHOLD_KM) {
+            setActiveTab("to-home");
+          }
+          // else keep default "from-home"
+          
+          setLocationDetected(true);
+        },
+        (error) => {
+          // On geolocation error, keep default "from-home" tab
+          console.log('Geolocation permission denied or error:', error.message);
+          setLocationDetected(true);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 600000 // 10 minutes cache
+        }
+      );
+    } else if (!locationDetected) {
+      // Geolocation not supported, keep default "from-home"
+      setLocationDetected(true);
+    }
+  }, [locationDetected]);
 
   useEffect(() => {
     // Clear previous data when tab changes
