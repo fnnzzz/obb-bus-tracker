@@ -19,6 +19,7 @@ const stationsHashMap = {
   liesing_bhf: "001192301",
   hauptbahnhof: "001290401",
   prater_bhf: "001290201",
+  perchtoldsdorf_bhf: "001131719",
 };
 
 const VIENNA_TZ = "Europe/Vienna";
@@ -94,4 +95,5 @@ export const defaultHandler = async (event, context) => {
 //     queryStringParameters: { route: "liesingBhf-meidlingBhf" },
 //   })
 // );
-// retrieveStationId("Praterstern");
+
+// console.log(retrieveStationId("perchtoldsdorf"));
