@@ -2,14 +2,14 @@ import { ArrowPathIcon, ClockIcon } from "@heroicons/react/20/solid";
 import { useEffect, useMemo, useState } from "react";
 
 const fromHomeRoutes = [
-  { name: "🚍 Kaiser → Liesing", value: "kaiser-liesing" },
+  { name: "🚍 Rodaun → Liesing", value: "rodaun_bus-liesing" },
   { name: "🚉 Rodaun → Hietzing", value: "rodaun_tram-hietzing" },
   { name: "🚆 Liesing Bhf → Hauptbahnhof", value: "liesing_bhf-hauptbahnhof" },
   {
     name: "🚆 Pdorf Bhf → Hauptbahnhof",
     value: "perchtoldsdorf_bhf-hauptbahnhof",
   },
-  { name: "🚍 Rodaun → Liesing", value: "rodaun_bus-liesing" },
+  { name: "🚍 Kaiser → Liesing", value: "kaiser-liesing" },
   { name: "🚍 Rodaun → Spitalskirche", value: "rodaun_bus-spitalskirche" },
 ];
 
@@ -52,6 +52,36 @@ function classNames(...classes) {
 // Add helper function to remove text in brackets
 function removeTextInBrackets(text) {
   return text.replace(/\([^()]*\)/g, "").trim();
+}
+
+// Parse HH:mm time string into total minutes
+function parseTime(timeStr) {
+  if (!timeStr) return null;
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+// Get trains departing within 0–15 min after busAti (handles midnight rollover)
+function getMatchingTrains(busAti, trainData) {
+  const busArrival = parseTime(busAti);
+  if (busArrival === null) return [];
+  return trainData.filter((train) => {
+    let departureTime = parseTime(train.rt?.dlt || train.ti);
+    if (departureTime === null) return false;
+    // Handle midnight rollover (e.g. bus arrives 23:55, train departs 00:05)
+    if (departureTime < busArrival) departureTime += 24 * 60;
+    const diff = departureTime - busArrival;
+    return diff >= 0 && diff <= 15;
+  });
+}
+
+// Extract transport name from raw pr field
+function extractTransportName(pr) {
+  return pr
+    .replace("Bus", "")
+    .replace("Tram", "")
+    .trim()
+    .replace(/\s+/g, "");
 }
 
 // Calculate distance between two coordinates using Haversine formula
@@ -112,15 +142,9 @@ export default function ScheduleList() {
 
   const handleLoadMore = (routeValue) => {
     setRouteCounts((prev) => {
-      const newCounts = {
-        ...prev,
-        [routeValue]: 10,
-      };
-
-      // Fetch data with new count
-      fetchRouteData(routeValue, 10);
-
-      return newCounts;
+      const newCount = (prev[routeValue] || 5) + 5;
+      fetchRouteData(routeValue, newCount);
+      return { ...prev, [routeValue]: newCount };
     });
   };
 
@@ -227,7 +251,7 @@ export default function ScheduleList() {
         const routeData = allRouteData[routeItem.value] || [];
         const isLoading = !allRouteData.hasOwnProperty(routeItem.value);
         const currentCount = routeCounts[routeItem.value] || 5;
-        const canLoadMore = currentCount === 5 && routeData.length >= 5;
+        const canLoadMore = currentCount < 15 && routeData.length >= currentCount;
 
         return (
           <div key={routeItem.value} className="mb-8">
@@ -276,11 +300,7 @@ export default function ScheduleList() {
               <>
                 <dl className="grid grid-cols-1 gap-3">
                   {routeData.map((item) => {
-                    const transportName = item.pr
-                      .replace("Bus", "")
-                      .replace("Tram", "")
-                      .trim()
-                      .replace(/\s+/g, ""); // Remove all whitespaces
+                    const transportName = extractTransportName(item.pr);
                     const transportColorClassName =
                       colorMap[transportName] ?? colorMap["DEFAULT"];
 
@@ -347,6 +367,41 @@ export default function ScheduleList() {
                             </p>
                           </dd>
                         </div>
+                        {/* Train subcards for Rodaun→Liesing */}
+                        {routeItem.value === "rodaun_bus-liesing" &&
+                          item.ati && (() => {
+                            const trainData =
+                              allRouteData["liesing_bhf-hauptbahnhof"] || [];
+                            const matchingTrains = getMatchingTrains(
+                              item.ati,
+                              trainData
+                            );
+                            if (matchingTrains.length === 0) return null;
+                            return (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {matchingTrains.map((train) => {
+                                  const trainName = extractTransportName(train.pr);
+                                  const trainTime =
+                                    train.rt?.dlt || train.ti;
+                                  const trainColor =
+                                    colorMap[trainName] ??
+                                    colorMap["DEFAULT"];
+                                  return (
+                                    <div
+                                      key={train.id}
+                                      className={classNames(
+                                        "flex items-center gap-1 rounded px-2 py-1 text-white text-xs font-semibold",
+                                        trainColor
+                                      )}
+                                    >
+                                      <span>{trainName}</span>
+                                      <span>{trainTime}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
                       </div>
                     );
                   })}
