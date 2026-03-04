@@ -20,6 +20,12 @@ const stationsHashMap = {
   hauptbahnhof: "001290401",
   prater_bhf: "001290201",
   perchtoldsdorf_bhf: "001131719",
+  pdorf: "001131719",
+  meidling_bhf: "001191201",
+  meidling: "001191201",
+  atzgersdorf_bhf: "001192304",
+  atzgersdorf: "001192304",
+  atzgesdorf: "001192304",
 };
 
 const VIENNA_TZ = "Europe/Vienna";
@@ -46,7 +52,7 @@ const getProcessedResponse = async (from, to, count = 5) => {
         const apiDateTime = parse(
           apiDateTimeString,
           "dd.MM.yyyy HH:mm",
-          new Date()
+          new Date(),
         );
 
         const apiUtcTime = zonedTimeToUtc(apiDateTime, VIENNA_TZ);
@@ -55,7 +61,7 @@ const getProcessedResponse = async (from, to, count = 5) => {
         const timeDifferenceMinutes = differenceInMinutes(
           localTime,
           apiUtcTime,
-          { roundingMethod: "round" }
+          { roundingMethod: "round" },
         );
 
         return { ...j, diff: timeDifferenceMinutes };
@@ -96,4 +102,4 @@ export const defaultHandler = async (event, context) => {
 //   })
 // );
 
-// console.log(retrieveStationId("perchtoldsdorf"));
+// console.log(retrieveStationId("atzgersdorf bhf"));

@@ -18,6 +18,8 @@ const toHomeRoutes = [
   { name: "🚉 Westbahnhof → Rodaun", value: "westbahnhof-rodaun_tram" },
   { name: "🚆 Hauptbahnhof → Liesing Bhf", value: "hauptbahnhof-liesing_bhf" },
   { name: "🚆 Prater Bhf → Liesing Bhf", value: "prater_bhf-liesing_bhf" },
+  { name: "🚆 Meidling Bhf → Pdorf Bhf", value: "meidling-pdorf" },
+  { name: "🚆 Meidling Bhf → Atzgersdorf Bhf", value: "meidling-atzgesdorf" },
   { name: "🚉 Hietzing → Rodaun", value: "hietzing-rodaun_tram" },
   { name: "🚍 Liesing → Spitalskirche", value: "liesing-spitalskirche" },
 ];
