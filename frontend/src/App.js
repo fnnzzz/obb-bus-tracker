@@ -1,5 +1,5 @@
 import { ArrowPathIcon, ClockIcon } from "@heroicons/react/20/solid";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const fromHomeRoutes = [
   { name: "🚍 Rodaun → Liesing", value: "rodaun_bus-liesing" },
@@ -110,6 +110,7 @@ export default function ScheduleList() {
   const [allRouteData, setAllRouteData] = useState({});
   const [routeCounts, setRouteCounts] = useState({});
   const [locationDetected, setLocationDetected] = useState(false);
+  const routeSectionRefs = useRef({});
 
   const currentRoutes = useMemo(
     () => mainTabs.find((tab) => tab.key === activeTab)?.routes || [],
@@ -155,6 +156,13 @@ export default function ScheduleList() {
     // Fetch fresh data for this specific route
     const count = routeCounts[routeValue] || 5;
     fetchRouteData(routeValue, count);
+  };
+
+  const scrollToRoute = (routeValue) => {
+    const routeSection = routeSectionRefs.current[routeValue];
+    if (routeSection) {
+      routeSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   useEffect(() => {
@@ -251,7 +259,15 @@ export default function ScheduleList() {
           currentCount < 15 && routeData.length >= currentCount;
 
         return (
-          <div key={routeItem.value} className="mb-8">
+          <div
+            key={routeItem.value}
+            ref={(element) => {
+              if (element) {
+                routeSectionRefs.current[routeItem.value] = element;
+              }
+            }}
+            className="mb-8"
+          >
             {/* Route Header */}
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg font-semibold text-white py-2 bg-transparent">
@@ -385,16 +401,23 @@ export default function ScheduleList() {
                                   const trainColor =
                                     colorMap[trainName] ?? colorMap["DEFAULT"];
                                   return (
-                                    <div
+                                    <button
                                       key={train.id}
+                                      type="button"
+                                      onClick={() =>
+                                        scrollToRoute(
+                                          "liesing_bhf-hauptbahnhof",
+                                        )
+                                      }
+                                      aria-label={`Show train ${trainName} at ${trainTime}`}
                                       className={classNames(
-                                        "flex items-center gap-1 rounded px-2 py-1 text-white text-xs font-semibold",
+                                        "flex items-center gap-1 rounded px-2 py-1 text-white text-xs font-semibold hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/70 cursor-pointer",
                                         trainColor,
                                       )}
                                     >
                                       <span>{trainName}</span>
                                       <span>{trainTime}</span>
-                                    </div>
+                                    </button>
                                   );
                                 })}
                               </div>
